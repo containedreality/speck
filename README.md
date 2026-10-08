@@ -6,6 +6,7 @@ An implementation of some variants of the SPECK block cipher written in Go.
 
 |Block size|Key size|
 |----------|--------|
+|64|128|
 |128|128|
 |128|256|
 

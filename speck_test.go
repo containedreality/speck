@@ -8,7 +8,61 @@ import (
 	"github.com/containedreality/speck"
 )
 
-func TestInvalidKeySize(t *testing.T) {
+func TestInvalidKeySize64(t *testing.T) {
+	key := []byte{0x00}
+
+	_, err := speck.New64(key)
+	if err == nil {
+		log.Println(err)
+		t.Fail()
+	}
+}
+
+func TestBlockSize64(t *testing.T) {
+	key := []byte{0x00, 0x01, 0x02, 0x03, 0x08, 0x09, 0x0a, 0x0b, 0x10, 0x11, 0x12, 0x13, 0x18, 0x19, 0x1a, 0x1b}
+
+	block, err := speck.New64(key)
+	if err != nil {
+		log.Println(err)
+		t.Fail()
+	}
+
+	if block.BlockSize() != 8 {
+		t.Fail()
+	}
+}
+
+func TestSpeck64_128(t *testing.T) {
+	key := []byte{0x00, 0x01, 0x02, 0x03, 0x08, 0x09, 0x0a, 0x0b, 0x10, 0x11, 0x12, 0x13, 0x18, 0x19, 0x1a, 0x1b}
+
+	block, err := speck.New64(key)
+	if err != nil {
+		log.Println(err)
+		t.Fail()
+	}
+
+	buf := make([]byte, 8)
+	plaintext := []byte{0x2d, 0x43, 0x75, 0x74, 0x74, 0x65, 0x72, 0x3b}
+	v := []byte{0x8b, 0x02, 0x4e, 0x45, 0x48, 0xa5, 0x6f, 0x8c}
+
+	block.Encrypt(buf, plaintext)
+
+	if !bytes.Equal(buf, v) {
+		log.Print(buf)
+		t.Fail()
+	}
+
+	decbuf := make([]byte, 8)
+	block.Decrypt(decbuf, buf)
+
+	if !bytes.Equal(decbuf, plaintext) {
+		log.Print(decbuf)
+		t.Fail()
+	}
+}
+
+// 128 bit blocks
+func TestInvalidKeySize128(t *testing.T) {
 	key := []byte{0x00}
 
 	_, err := speck.New128(key)
@@ -18,7 +72,7 @@ func TestInvalidKeySize(t *testing.T) {
 	}
 }
 
-func TestBlockSize(t *testing.T) {
+func TestBlockSize128(t *testing.T) {
 	key := []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f}
 
 	block, err := speck.New128(key)
@@ -93,6 +147,24 @@ func TestSpeck128_256(t *testing.T) {
 	if !bytes.Equal(decbuf, plaintext) {
 		log.Print(buf)
 		t.Fail()
+	}
+}
+
+// benchmarks
+func BenchmarkSpeck64_128(b *testing.B) {
+	key := []byte{0x00, 0x01, 0x02, 0x03, 0x08, 0x09, 0x0a, 0x0b, 0x10, 0x11, 0x12, 0x13, 0x18, 0x19, 0x1a, 0x1b}
+
+	block, err := speck.New64(key)
+	if err != nil {
+		log.Println(err)
+		b.Fail()
+	}
+
+	buf := make([]byte, 8)
+	plaintext := []byte{0x2d, 0x43, 0x75, 0x74, 0x74, 0x65, 0x72, 0x3b}
+
+	for b.Loop() {
+		block.Encrypt(buf, plaintext)
 	}
 }
 
